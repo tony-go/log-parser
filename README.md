@@ -21,7 +21,7 @@ $ cargo build
 $ cargo run -- --path <path>
 ```
 
-Example - find `rust` patter in the `README.md` file:
+Example:
 ```bash
 $ cargo run -- --path ./gc-log.txt
 ```
