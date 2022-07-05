@@ -1,6 +1,8 @@
-use clap::{App, Arg};
-use std::fs::read_to_string;
+use std::fs::File;
+use std::io::{BufReader, BufRead};
 use std::path::Path;
+
+use clap::{App, Arg};
 
 #[derive(Debug, PartialEq)]
 #[allow(dead_code)]
@@ -32,6 +34,7 @@ impl GcStats {
         GcStats {
             phase: phase,
             timing: timing,
+            // TODO: create GcBodyStats struct
             body: body,
         }
     }
@@ -65,13 +68,14 @@ fn parse_log(line: &str) -> GcStats {
     }
 }
 
-fn get_log_file(log_file_path: String) -> String {
+fn get_file_reader(log_file_path: String) -> BufReader<File> {
     let log_file_path = Path::new(&log_file_path);
-
-    read_to_string(log_file_path).unwrap()
+    let log_file = File::open(log_file_path).unwrap();
+    
+    BufReader::new(log_file)
 }
 
-fn main() {
+fn get_input_file_path() -> String {
     let path_arg_name = "path";
     let args = App::new("gc-log-parser")
         .arg(
@@ -83,14 +87,19 @@ fn main() {
                 .required(true),
         ).get_matches();
 
-    let path = args.value_of(path_arg_name).unwrap();
-    let file = get_log_file(String::from(path));
-    let lines = file.lines();
+    let raw_string = args.value_of(path_arg_name).unwrap();
+    String::from(raw_string)
+}
 
-    for line in lines {
-        let gc_stats = parse_log(line);
-        println!("{:?}", gc_stats);
-    }
+fn main() {
+    let file_path = get_input_file_path();
+    let file_reader: BufReader<File> = get_file_reader(file_path);
+ 
+    file_reader.lines()
+        .map(|line| parse_log(&line.unwrap()))
+        .for_each(|gc_stats| {
+            println!("{:?}", gc_stats);
+        });
 }
 
 #[cfg(test)]
